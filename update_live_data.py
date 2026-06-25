@@ -2,14 +2,8 @@ import os
 import requests
 from datetime import datetime, timedelta
 
-# EĞER ÇEVRE DEĞİŞKENİ ÇALIŞMIYORSA, KENDİ API KEY'İNİ "BURAYA_YAZ" KISMINA EKLEYEBİLİRSİN
-API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "BURAYA_YAZ")
-
-if not API_KEY or API_KEY == "afb8a78ed067402d8b19d6d5b29518d5":
-    print("\n🛑 HATA: API Anahtarı eksik!")
-    print("Lütfen kodu (update_live_data.py) not defteri veya editör ile açıp 'BURAYA_YAZ' yazan yere gerçek API anahtarını yapıştırın.")
-    input("Kapatmak için Enter'a basın...")
-    exit(1)
+# API anahtarı doğrudan buraya sabitlendi
+API_KEY = "afb8a78ed067402d8b19d6d5b29518d5"
 
 standings_url = "https://api.football-data.org/v4/competitions/WC/standings"
 matches_url = "https://api.football-data.org/v4/competitions/WC/matches"
@@ -65,6 +59,7 @@ try:
             standings = r.json().get("standings", [])
         else:
             print(f"⚠️ Uyarı: Puan durumu API hatası döndü. Kod: {r.status_code}")
+            print(f"API Mesajı: {r.text}")
     except Exception as e:
         print(f"🛑 Puan durumu çekilirken bağlantı hatası: {e}")
 
@@ -75,6 +70,7 @@ try:
             all_matches = r.json().get("matches", [])
         else:
             print(f"⚠️ Uyarı: Fikstür API hatası döndü. Kod: {r.status_code}")
+            print(f"API Mesajı: {r.text}")
     except Exception as e:
         print(f"🛑 Maçlar çekilirken bağlantı hatası: {e}")
 
@@ -185,7 +181,7 @@ try:
                 
             html_content += "</table></div>"
     else:
-        html_content += "<p style='text-align:center;font-size:12px;color:#64748b;'>Puan durumu verisi yükleniyor...</p>"
+        html_content += "<p style='text-align:center;font-size:12px;color:#64748b;'>Puan durumu verisi yüklenmiyor. (API hatası olabilir)</p>"
         
     html_content += "</div></div>"
 
@@ -256,105 +252,4 @@ try:
         for m in today_matches:
             h_obj = m.get("homeTeam") or {}
             a_obj = m.get("awayTeam") or {}
-            h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
-            h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            
-            score_obj = m.get("score") or {}
-            full_time = score_obj.get("fullTime") or {}
-            h_score = full_time.get("home")
-            a_score = full_time.get("away")
-            
-            status = m.get("status")
-            badge = '<span class="status-badge badge-live">CANLI</span>' if status == "IN_PLAY" else ('<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>')
-                
-            html_content += f"""
-            <div class="match-card today">
-                <div class="m-teams">
-                    <div class="m-line">{h_flag_html}<span>{h_name}</span></div>
-                    <div class="m-line">{a_flag_html}<span>{a_name}</span></div>
-                </div>
-                <div class="m-scores">
-                    <div>{h_score if h_score is not None else "-"}</div>
-                    <div>{a_score if a_score is not None else "-"}</div>
-                </div>
-                <div class="m-info">{badge}</div>
-            </div>"""
-
-    if other_matches:
-        html_content += '<div class="section-divider">Karşılaşmalar</div>'
-        for m in other_matches[:45]:
-            h_obj = m.get("homeTeam") or {}
-            a_obj = m.get("awayTeam") or {}
-            h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
-            h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            
-            score_obj = m.get("score") or {}
-            full_time = score_obj.get("fullTime") or {}
-            h_score = full_time.get("home")
-            a_score = full_time.get("away")
-            
-            status = m.get("status")
-            badge = '<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>'
-                
-            html_content += f"""
-            <div class="match-card">
-                <div class="m-teams">
-                    <div class="m-line">{h_flag_html}<span>{h_name}</span></div>
-                    <div class="m-line">{a_flag_html}<span>{a_name}</span></div>
-                </div>
-                <div class="m-scores">
-                    <div>{h_score if h_score is not None else "-"}</div>
-                    <div>{a_score if a_score is not None else "-"}</div>
-                </div>
-                <div class="m-info">{badge}</div>
-            </div>"""
-            
-    html_content += "</div></div>"
-
-    html_content += """
-    <script>
-        function openTab(tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-                tabcontent[i].classList.remove("active");
-            }
-            tablinks = document.getElementsByClassName("tab-btn");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].classList.remove("active");
-            }
-            document.getElementById(tabName).style.display = "block";
-            document.getElementById(tabName).classList.add("active");
-            event.currentTarget.classList.add("active");
-        }
-    </script>
-</body>
-</html>
-"""
-
-    # GÜVENLİ DOSYA KAYDETME İŞLEMİ
-    current_dir = os.getcwd()
-    file_path = os.path.join(current_dir, "wc2026_groups_live.html")
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    
-    # Ekrana Tarayıcı Linkini Yazdırma
-    print("\n✅ BAŞARILI: HTML dosyası oluşturuldu!")
-    
-    # Windows ve Mac/Linux yol farklarını çözüp tam link formatı oluşturuyoruz
-    browser_link = "file:///" + file_path.replace("\\", "/")
-    
-    print("--------------------------------------------------")
-    print("🌐 PUAN DURUMUNU GÖRMEK İÇİN AŞAĞIDAKİ LİNKİ KOPYALAYIP TARAYICINIZA YAPIŞTIRIN:\n")
-    print(f"👉  {browser_link}  👈")
-    print("--------------------------------------------------")
-
-    input("\nEkranı kapatmak için Enter'a basın...")
-
-except Exception as e:
-    print(f"\n🛑 KRİTİK HATA: Kod çalışırken beklenmeyen bir hata ile karşılaştı:\nDetay: {e}")
-    input("\nEkranı kapatmak için Enter'a basın...")
+            h_name, a_name = translate(h_obj.get("name")), translate(a_
