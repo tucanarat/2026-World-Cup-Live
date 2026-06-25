@@ -84,47 +84,4 @@ html_content = """<!DOCTYPE html>
         .section-divider { font-size: 10px; font-weight: 700; color: #64748b; margin: 12px 0 4px 0; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
         .section-divider::after { content: ''; flex: 1; height: 1px; background: #f1f5f9; }
         .match-card { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 12px; }
-        .match-card.today { border-color: #10b981; background: #f0fdf4; }
-        .m-teams { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-        .m-line { display: flex; align-items: center; gap: 6px; }
-        .m-scores { display: flex; flex-direction: column; gap: 5px; font-weight: 700; text-align: right; width: 20px; color: #0f172a; }
-        .m-info { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 8px; border-left: 1px solid #f1f5f9; margin-left: 8px; min-width: 55px; }
-        .status-badge { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; }
-        .badge-live { background: #ef4444; color: #ffffff; animation: pulse 1.5s infinite; }
-        .badge-time { background: #f1f5f9; color: #475569; }
-        .badge-end { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
-        .winner { font-weight: 600; color: #0f172a; }
-        .loser { color: #cbd5e1; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    </style>
-</head>
-<body>
-    <div class="header-container"><h1>2026 FIFA DÜNYA KUPASI</h1><p>Canlı Turnuva Merkezi</p></div>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab('groups')">⚽ Puan Durumu</button>
-        <button class="tab-btn" onclick="openTab('bracket')">🌿 Turnuva Ağacı</button>
-        <button class="tab-btn" onclick="openTab('fixtures')">📅 Karşılaşmalar</button>
-    </div>
-    <div id="groups" class="tab-content active"><div class="groups-grid">
-"""
-
-if standings:
-    for group in standings:
-        g_name = group.get("group", "Grup").replace("GROUP_", "Grup ")
-        html_content += f'<div class="group-card"><h2 class="group-title">{g_name}</h2>'
-        html_content += "<table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr>"
-        
-        table_rows = group.get("table", [])
-        
-        # Matematiksel elenme kontrolü için gruptaki güncel puanları listeliyoruz
-        group_points = [row.get("points", 0) for row in table_rows]
-        
-        for index, row in enumerate(table_rows):
-            team_obj = row.get("team") or {}
-            t_name = translate(team_obj.get("name"))
-            t_flag = team_obj.get("crest", "")
-            played = row.get("playedGames", 0)
-            points = row.get("points", 0)
-            gd = row.get("goalDifference", 0)
-            
-            row_style
+        .match-card.today { border-color: #
