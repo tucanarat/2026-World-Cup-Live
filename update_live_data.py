@@ -2,50 +2,45 @@ import os
 import requests
 from datetime import datetime, timedelta
 
-API_KEY = os.getenv("FOOTBALL_DATA_API_KEY")
-if not API_KEY:
-    print("HATA: API Anahtarı bulunamadı!")
-    exit(1)
+# API anahtarı yoksa hata verip çökmek yerine boş string atayıp devam etmesini sağlıyoruz
+API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "")
 
 standings_url = "https://api.football-data.org/v4/competitions/WC/standings"
 matches_url = "https://api.football-data.org/v4/competitions/WC/matches"
-headers = {"X-Auth-Token": API_KEY}
+headers = {"X-Auth-Token": API_KEY} if API_KEY else {}
 
-# Eksiksiz Dünya Kupası Takımları Türkçe Sözlüğü
+# 2026 Dünya Kupası'ndaki Kesin 48 Takım ve API Varyasyonları Sözlüğü
 TR_TEAMS = {
-    # Avrupa (UEFA)
-    "Germany": "Almanya", "France": "Fransa", "England": "İngiltere", "Spain": "İspanya",
-    "Italy": "İtalya", "Netherlands": "Hollanda", "Portugal": "Portekiz", "Belgium": "Belçika",
-    "Croatia": "Hırvatistan", "Switzerland": "İsviçre", "Denmark": "Danimarka", "Poland": "Polonya",
-    "Serbia": "Sırbistan", "Wales": "Galler", "Ukraine": "Ukrayna", "Sweden": "İsveç",
-    "Norway": "Norveç", "Czechia": "Çekya", "Turkey": "Türkiye", "Scotland": "İskoçya",
-    "Austria": "Avusturya", "Hungary": "Macaristan", "Bosnia-Herzegovina": "Bosna Hersek",
-    
-    # Güney Amerika (CONMEBOL)
-    "Brazil": "Brezilya", "Argentina": "Arjantin", "Uruguay": "Uruguay", "Colombia": "Kolombiya",
-    "Peru": "Peru", "Chile": "Şili", "Ecuador": "Ekvador", "Paraguay": "Paraguay", "Venezuela": "Venezuela",
-    
-    # Kuzey/Orta Amerika & Karayipler (CONCACAF)
-    "United States": "ABD", "USA": "ABD", "Mexico": "Meksika", "Canada": "Kanada",
-    "Costa Rica": "Kosta Rika", "Jamaica": "Jamaika", "Panama": "Panama", "Haiti": "Haiti",
-    "Honduras": "Honduras", "El Salvador": "El Salvador",
-    
-    # Afrika (CAF)
-    "Morocco": "Fas", "Senegal": "Senegal", "Tunisia": "Tunus", "Cameroon": "Kamerun",
-    "Ghana": "Gana", "Egypt": "Mısır", "Algeria": "Cezayir", "Nigeria": "Nijerya",
-    "Ivory Coast": "Fildişi Sahili", "South Africa": "Güney Afrika", "Mali": "Mali",
-    
-    # Asya & Okyanusya (AFC & OFC)
-    "Japan": "Japonya", "South Korea": "Güney Kore", "Australia": "Avustralya", "Iran": "İran",
-    "Saudi Arabia": "Suudi Arabistan", "Qatar": "Katar", "Iraq": "Irak", "United Arab Emirates": "BAE",
-    "China": "Çin", "New Zealand": "Yeni Zelanda"
+    # A Grubu
+    "Mexico": "Meksika", "South Africa": "Güney Afrika", "South Korea": "Güney Kore", "Korea Republic": "Güney Kore", "Czechia": "Çekya", "Czech Republic": "Çekya",
+    # B Grubu
+    "Canada": "Kanada", "Bosnia and Herzegovina": "Bosna-Hersek", "Bosnia-Herzegovina": "Bosna-Hersek", "Qatar": "Katar", "Switzerland": "İsviçre",
+    # C Grubu
+    "Brazil": "Brezilya", "Morocco": "Fas", "Haiti": "Haiti", "Scotland": "İskoçya",
+    # D Grubu
+    "USA": "ABD", "United States": "ABD", "United States of America": "ABD", "Paraguay": "Paraguay", "Australia": "Avustralya", "Turkey": "Türkiye", "Türkiye": "Türkiye",
+    # E Grubu
+    "Germany": "Almanya", "Curaçao": "Curaçao", "Curacao": "Curaçao", "Ivory Coast": "Fildişi Sahili", "Cote d'Ivoire": "Fildişi Sahili", "Ecuador": "Ekvador",
+    # F Grubu
+    "Netherlands": "Hollanda", "Japan": "Japonya", "Sweden": "İsveç", "Tunisia": "Tunus",
+    # G Grubu
+    "Belgium": "Belçika", "Egypt": "Mısır", "Iran": "İran", "IR Iran": "İran", "New Zealand": "Yeni Zelanda",
+    # H Grubu
+    "Spain": "İspanya", "Cape Verde": "Yeşil Burun Adaları", "Cabo Verde": "Yeşil Burun Adaları", "Saudi Arabia": "Suudi Arabistan", "Uruguay": "Uruguay",
+    # I Grubu
+    "France": "Fransa", "Senegal": "Senegal", "Iraq": "Irak", "Norway": "Norveç",
+    # J Grubu
+    "Argentina": "Arjantin", "Algeria": "Cezayir", "Austria": "Avusturya", "Jordan": "Ürdün",
+    # K Grubu
+    "Portugal": "Portekiz", "DR Congo": "Demokratik Kongo Cumhuriyeti", "Congo DR": "Demokratik Kongo Cumhuriyeti", "Democratic Republic of the Congo": "Demokratik Kongo Cumhuriyeti", "Uzbekistan": "Özbekistan", "Colombia": "Kolombiya",
+    # L Grubu
+    "England": "İngiltere", "Croatia": "Hırvatistan", "Ghana": "Gana", "Panama": "Panama"
 }
 
 def translate(name):
     if not name: 
         return "Bekliyor..."
     name_str = str(name).strip()
-    # Eğer sözlükte varsa Türkçe karşılığını, yoksa orijinal ismi döndürür
     return TR_TEAMS.get(name_str, name_str)
 
 def parse_tsi_time(utc_date_str):
@@ -59,18 +54,20 @@ def parse_tsi_time(utc_date_str):
 
 try:
     standings = []
-    try:
-        r = requests.get(standings_url, headers=headers, timeout=15)
-        if r.status_code == 200: standings = r.json().get("standings", [])
-    except Exception as e:
-        print(f"Puan durumu çekilemedi: {e}")
+    if API_KEY:
+        try:
+            r = requests.get(standings_url, headers=headers, timeout=15)
+            if r.status_code == 200: standings = r.json().get("standings", [])
+        except Exception as e:
+            print(f"Puan durumu çekilemedi: {e}")
 
     all_matches = []
-    try:
-        r = requests.get(matches_url, headers=headers, timeout=15)
-        if r.status_code == 200: all_matches = r.json().get("matches", [])
-    except Exception as e:
-        print(f"Maçlar çekilemedi: {e}")
+    if API_KEY:
+        try:
+            r = requests.get(matches_url, headers=headers, timeout=15)
+            if r.status_code == 200: all_matches = r.json().get("matches", [])
+        except Exception as e:
+            print(f"Maçlar çekilemedi: {e}")
 
     current_date_str = datetime.utcnow().strftime("%Y-%m-%d")
 
@@ -121,30 +118,4 @@ try:
         
         .m-teams { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         .m-line { display: flex; align-items: center; gap: 6px; }
-        .m-scores { display: flex; flex-direction: column; gap: 5px; font-weight: 700; text-align: right; width: 20px; color: #0f172a; }
-        
-        .m-info { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 8px; border-left: 1px solid #f1f5f9; margin-left: 8px; min-width: 55px; }
-        .status-badge { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; }
-        .badge-live { background: #ef4444; color: #ffffff; animation: pulse 1.5s infinite; }
-        .badge-time { background: #f1f5f9; color: #475569; }
-        .badge-end { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
-
-        .winner { font-weight: 600; color: #0f172a; }
-        .loser { color: #cbd5e1; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    </style>
-</head>
-<body>
-
-    <div class="header-container">
-        <h1>2026 FIFA DÜNYA KUPASI</h1>
-        <p>Canlı Turnuva Merkezi</p>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab('groups')">⚽ Puan Durumu</button>
-        <button class="tab-btn" onclick="openTab('bracket')">🌿 Turnuva Ağacı</button>
-        <button class="tab-btn" onclick="openTab('fixtures')">📅 Karşılaşmalar</button>
-    </div>
-
-    <div id="groups" class="tab-content active
+        .m-scores { display: flex; flex-direction: column; gap
