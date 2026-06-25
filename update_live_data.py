@@ -4,16 +4,25 @@ import requests
 API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "")
 headers = {"X-Auth-Token": API_KEY} if API_KEY else {}
 
+# İSİM EŞLEŞTİRME SÖZLÜĞÜ (Genişletildi)
 TR_TEAMS = {
-    "MEXICO": "Meksika", "SOUTH AFRICA": "Güney Afrika", "SOUTH KOREA": "Güney Kore", "CANADA": "Kanada",
-    "USA": "ABD", "TURKEY": "Türkiye", "GERMANY": "Almanya", "NETHERLANDS": "Hollanda", "JAPAN": "Japonya",
-    "BELGIUM": "Belçika", "SPAIN": "İspanya", "FRANCE": "Fransa", "ARGENTINA": "Arjantin", "PORTUGAL": "Portekiz",
-    "ENGLAND": "İngiltere", "CROATIA": "Hırvatistan", "BRAZIL": "Brezilya", "MOROCCO": "Fas", "ECUADOR": "Ekvador",
-    "TUNISIA": "Tunus", "IRAN": "İran", "GHANA": "Gana", "PANAMA": "Panama", "URUGUAY": "Uruguay", "COLOMBIA": "Kolombiya"
+    "MEXICO": "Meksika", "SOUTH AFRICA": "Güney Afrika", "SOUTH KOREA": "Güney Kore", 
+    "KOREA REPUBLIC": "Güney Kore", "REP. KOREA": "Güney Kore", "CANADA": "Kanada", 
+    "USA": "ABD", "UNITED STATES": "ABD", "TURKEY": "Türkiye", "TÜRKIYE": "Türkiye", 
+    "GERMANY": "Almanya", "NETHERLANDS": "Hollanda", "JAPAN": "Japonya", 
+    "BELGIUM": "Belçika", "SPAIN": "İspanya", "FRANCE": "Fransa", "ARGENTINA": "Arjantin", 
+    "PORTUGAL": "Portekiz", "ENGLAND": "İngiltere", "CROATIA": "Hırvatistan", 
+    "BRAZIL": "Brezilya", "MOROCCO": "Fas", "ECUADOR": "Ekvador", "TUNISIA": "Tunus", 
+    "IRAN": "İran", "IR IRAN": "İran", "GHANA": "Gana", "PANAMA": "Panama", 
+    "URUGUAY": "Uruguay", "COLOMBIA": "Kolombiya", "SWITZERLAND": "İsviçre", 
+    "DENMARK": "Danimarka", "SERBIA": "Sırbistan", "POLAND": "Polonya", 
+    "AUSTRALIA": "Avustralya", "SAUDI ARABIA": "Suudi Arabistan"
 }
 
 def translate(name):
-    return TR_TEAMS.get(str(name).strip().upper(), str(name).strip())
+    # İsimleri temizle ve sözlükte ara
+    clean_name = str(name).strip().upper()
+    return TR_TEAMS.get(clean_name, str(name).strip())
 
 def get_standings():
     try:
@@ -41,15 +50,17 @@ html = """<!DOCTYPE html>
 """
 
 for group in get_standings():
-    html += f'<div class="group-card"><h2>{group.get("group").replace("GROUP_", "Grup ")}</h2><table>'
+    group_name = group.get("group", "").replace("GROUP_", "Grup ")
+    html += f'<div class="group-card"><h2>{group_name}</h2><table>'
     html += '<tr><th style="text-align:left;">Takım</th><th>O</th><th>P</th></tr>'
     for row in group.get("table", []):
         team_obj = row.get("team", {})
-        name = translate(team_obj.get("name"))
+        original_name = team_obj.get("name", "Bilinmiyor")
+        name = translate(original_name)
         flag = team_obj.get("crest", "")
         played = row.get("playedGames", 0)
         points = row.get("points", 0)
-        html += f'<tr><td class="team-info"><img src="{flag}" class="flag">{name}</td><td>{played}</td><td style="font-weight:bold;">{points}</td></tr>'
+        html += f'<tr><td class="team-info"><img src="{flag}" class="flag" onerror="this.style.display=\'none\'">{name}</td><td>{played}</td><td style="font-weight:bold;">{points}</td></tr>'
     html += '</table></div>'
 
 html += "</body></html>"
