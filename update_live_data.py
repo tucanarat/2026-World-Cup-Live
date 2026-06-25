@@ -8,42 +8,24 @@ standings_url = "https://api.football-data.org/v4/competitions/WC/standings"
 matches_url = "https://api.football-data.org/v4/competitions/WC/matches"
 headers = {"X-Auth-Token": API_KEY} if API_KEY else {}
 
-# API'den gelebilecek tüm olası varyasyonları kapsayan büyük harf indeksli Türkçe sözlük
 TR_TEAMS = {
-    # A Grubu
     "MEXICO": "Meksika", "SOUTH AFRICA": "Güney Afrika", "SOUTH KOREA": "Güney Kore", "KOREA REPUBLIC": "Güney Kore", "REP. KOREA": "Güney Kore", "CZECHIA": "Çekya", "CZECH REPUBLIC": "Çekya",
-    # B Grubu
     "CANADA": "Kanada", "BOSNIA AND HERZEGOVINA": "Bosna-Hersek", "BOSNIA-HERZEGOVINA": "Bosna-Hersek", "BOSNIA": "Bosna-Hersek", "QATAR": "Katar", "SWITZERLAND": "İsviçre",
-    # C Grubu
     "BRAZIL": "Brezilya", "MOROCCO": "Fas", "HAITI": "Haiti", "SCOTLAND": "İskoçya",
-    # D Grubu
     "USA": "ABD", "UNITED STATES": "ABD", "UNITED STATES OF AMERICA": "ABD", "PARAGUAY": "Paraguay", "AUSTRALIA": "Avustralya", "TURKEY": "Türkiye", "TÜRKIYE": "Türkiye",
-    # E Grubu
     "GERMANY": "Almanya", "CURAÇAO": "Curaçao", "CURACAO": "Curaçao", "IVORY COAST": "Fildişi Sahili", "CÔTE D'IVOIRE": "Fildişi Sahili", "COTE D'IVOIRE": "Fildişi Sahili", "ECUADOR": "Ekvador",
-    # F Grubu
     "NETHERLANDS": "Hollanda", "JAPAN": "Japonya", "SWEDEN": "İsveç", "TUNISIA": "Tunus",
-    # G Grubu
     "BELGIUM": "Belçika", "EGYPT": "Mısır", "IRAN": "İran", "IR IRAN": "İran", "ISLAMIC REPUBLIC OF IRAN": "İran", "NEW ZEALAND": "Yeni Zelanda",
-    # H Grubu
     "SPAIN": "İspanya", "CAPE VERDE": "Yeşil Burun Adaları", "CABO VERDE": "Yeşil Burun Adaları", "CAPE VERDE ISLANDS": "Yeşil Burun Adaları", "SAUDI ARABIA": "Suudi Arabistan", "URUGUAY": "Uruguay",
-    # I Grubu
     "FRANCE": "Fransa", "SENEGAL": "Senegal", "IRAQ": "Irak", "NORWAY": "Norveç",
-    # J Grubu
     "ARGENTINA": "Arjantin", "ALGERIA": "Cezayir", "AUSTRIA": "Avusturya", "JORDAN": "Ürdün",
-    # K Grubu
     "PORTUGAL": "Portekiz", "DR CONGO": "Demokratik Kongo Cumhuriyeti", "CONGO DR": "Demokratik Kongo Cumhuriyeti", "DEMOCRATIC REPUBLIC OF THE CONGO": "Demokratik Kongo Cumhuriyeti", "CONGO DEMOCRATIC REPUBLIC": "Demokratik Kongo Cumhuriyeti", "UZBEKISTAN": "Özbekistan", "COLOMBIA": "Kolombiya",
-    # L Grubu
     "ENGLAND": "İngiltere", "CROATIA": "Hırvatistan", "GHANA": "Gana", "PANAMA": "Panama"
 }
 
 def translate(name):
-    if not name: 
-        return "Bekliyor..."
-    
-    # Gelen ismi temizleyip büyük harfe çeviriyoruz (böylece eşleşme ihtimali kesinleşiyor)
+    if not name: return "Bekliyor..."
     name_str = str(name).strip().upper()
-    
-    # Sözlükte varsa Türkçe karşılığını, yoksa API'den gelen orijinal ismi (ilk harfleri büyük formatta) döndürür
     return TR_TEAMS.get(name_str, str(name).strip())
 
 def parse_tsi_time(utc_date_str):
@@ -96,8 +78,8 @@ html_content = """<!DOCTYPE html>
         .team-cell { display: flex; align-items: center; gap: 6px; text-align: left; font-weight: 500; }
         .flag { width: 16px; height: 11px; object-fit: cover; border: 1px solid #e2e8f0; }
         .tbd-icon { font-size: 11px; color: #94a3b8; }
-        .status-qualified { font-weight: 600; color: #0f172a; background-color: #f0fdf4; }
-        .status-eliminated { color: #cbd5e1 !important; opacity: 0.55; }
+        .status-qualified { font-weight: 600; color: #16a34a; background-color: #f0fdf4; }
+        .status-eliminated { color: #94a3b8 !important; opacity: 0.45; background-color: #f8fafc; }
         .matches-list, .bracket-container { display: flex; flex-direction: column; gap: 6px; max-width: 480px; margin: 0 auto; padding: 2px; }
         .section-divider { font-size: 10px; font-weight: 700; color: #64748b; margin: 12px 0 4px 0; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
         .section-divider::after { content: ''; flex: 1; height: 1px; background: #f1f5f9; }
@@ -131,6 +113,8 @@ if standings:
         g_name = group.get("group", "Grup").replace("GROUP_", "Grup ")
         html_content += f'<div class="group-card"><h2 class="group-title">{g_name}</h2>'
         html_content += "<table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr>"
+        
+        # 48'li formata uygun doğru endeks analizi (index 0=1., 1=2., 2=3., 3=4. takım)
         for index, row in enumerate(group.get("table", [])):
             team_obj = row.get("team") or {}
             t_name = translate(team_obj.get("name"))
@@ -138,10 +122,17 @@ if standings:
             played = row.get("playedGames", 0)
             points = row.get("points", 0)
             gd = row.get("goalDifference", 0)
+            
             row_style = ""
+            # Eğer takım tüm grup maçlarını (3 maç) oynadıysa durumunu kontrol et
             if played == 3:
-                if index < 2: row_style = ' class="status-qualified"'
-                elif index > 2: row_style = ' class="status-eliminated"'
+                if index < 2: 
+                    row_style = ' class="status-qualified"'  # İlk 2 sıra net çıktı (Yeşil tonu)
+                elif index == 3: 
+                    row_style = ' class="status-eliminated"'   # 4. sıra net elendi (Silik/Opak)
+                # Not: index == 2 (3. sıradaki) takımlar turnuva kuralları gereği en iyi üçüncüler 
+                # tablosuna bakılarak eleneceğinden, grup aşaması tamamen bitene kadar nötr kalır.
+
             flag_html = f'<img src="{t_flag}" class="flag">' if t_flag else '<span class="tbd-icon">🏆</span>'
             html_content += f"<tr{row_style}><td class='team-cell'>{flag_html}<span>{t_name}</span></td><td>{played}</td><td>{gd}</td><td>{points}</td></tr>"
         html_content += "</table></div>"
