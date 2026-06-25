@@ -8,15 +8,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Bu yetkiyi mutlaka koruyun
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Token'ı buraya ekliyoruz
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Python Kurulumu
-        uses: actions/setup-python@v5 # v4 yerine v5 kullanın
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
