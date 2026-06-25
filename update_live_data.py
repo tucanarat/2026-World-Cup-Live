@@ -11,26 +11,42 @@ standings_url = "https://api.football-data.org/v4/competitions/WC/standings"
 matches_url = "https://api.football-data.org/v4/competitions/WC/matches"
 headers = {"X-Auth-Token": API_KEY}
 
-# Eksiksiz Türkçe Dünya Kupası Sözlüğü
+# Eksiksiz Dünya Kupası Takımları Türkçe Sözlüğü
 TR_TEAMS = {
-    "Argentina": "Arjantin", "Brazil": "Brezilya", "France": "Fransa", "Germany": "Almanya",
-    "Spain": "İspanya", "England": "İngiltere", "Italy": "İtalya", "Netherlands": "Hollanda",
-    "Portugal": "Portekiz", "Belgium": "Belçika", "Croatia": "Hırvatistan", "Uruguay": "Uruguay",
-    "Mexico": "Meksika", "United States": "ABD", "Canada": "Kanada", "Morocco": "Fas",
-    "Japan": "Japonya", "South Korea": "Güney Kore", "Australia": "Avustralya", "Senegal": "Senegal",
-    "Iran": "İran", "Saudi Arabia": "Suudi Arabistan", "Qatar": "Katar", "Ecuador": "Ekvador",
-    "Wales": "Galler", "Poland": "Polonya", "Tunisia": "Tunus", "Denmark": "Danimarka",
-    "Costa Rica": "Kosta Rika", "Switzerland": "İsviçre", "Cameroon": "Kamerun", "Ghana": "Gana",
-    "Czechia": "Çekya", "Bosnia-Herzegovina": "Bosna Hersek", "Scotland": "İskoçya", "Haiti": "Haiti",
-    "Paraguay": "Paraguay", "Turkey": "Türkiye", "Peru": "Peru", "Colombia": "Kolombiya",
-    "Chile": "Şili", "Sweden": "İsveç", "Norway": "Norveç", "Ukraine": "Ukrayna", 
-    "Serbia": "Sırbistan", "Algeria": "Cezayir", "Egypt": "Mısır", "Nigeria": "Nijerya",
-    "South Africa": "Güney Afrika"
+    # Avrupa (UEFA)
+    "Germany": "Almanya", "France": "Fransa", "England": "İngiltere", "Spain": "İspanya",
+    "Italy": "İtalya", "Netherlands": "Hollanda", "Portugal": "Portekiz", "Belgium": "Belçika",
+    "Croatia": "Hırvatistan", "Switzerland": "İsviçre", "Denmark": "Danimarka", "Poland": "Polonya",
+    "Serbia": "Sırbistan", "Wales": "Galler", "Ukraine": "Ukrayna", "Sweden": "İsveç",
+    "Norway": "Norveç", "Czechia": "Çekya", "Turkey": "Türkiye", "Scotland": "İskoçya",
+    "Austria": "Avusturya", "Hungary": "Macaristan", "Bosnia-Herzegovina": "Bosna Hersek",
+    
+    # Güney Amerika (CONMEBOL)
+    "Brazil": "Brezilya", "Argentina": "Arjantin", "Uruguay": "Uruguay", "Colombia": "Kolombiya",
+    "Peru": "Peru", "Chile": "Şili", "Ecuador": "Ekvador", "Paraguay": "Paraguay", "Venezuela": "Venezuela",
+    
+    # Kuzey/Orta Amerika & Karayipler (CONCACAF)
+    "United States": "ABD", "USA": "ABD", "Mexico": "Meksika", "Canada": "Kanada",
+    "Costa Rica": "Kosta Rika", "Jamaica": "Jamaika", "Panama": "Panama", "Haiti": "Haiti",
+    "Honduras": "Honduras", "El Salvador": "El Salvador",
+    
+    # Afrika (CAF)
+    "Morocco": "Fas", "Senegal": "Senegal", "Tunisia": "Tunus", "Cameroon": "Kamerun",
+    "Ghana": "Gana", "Egypt": "Mısır", "Algeria": "Cezayir", "Nigeria": "Nijerya",
+    "Ivory Coast": "Fildişi Sahili", "South Africa": "Güney Afrika", "Mali": "Mali",
+    
+    # Asya & Okyanusya (AFC & OFC)
+    "Japan": "Japonya", "South Korea": "Güney Kore", "Australia": "Avustralya", "Iran": "İran",
+    "Saudi Arabia": "Suudi Arabistan", "Qatar": "Katar", "Iraq": "Irak", "United Arab Emirates": "BAE",
+    "China": "Çin", "New Zealand": "Yeni Zelanda"
 }
 
 def translate(name):
-    if not name: return "Bekliyor..."
-    return TR_TEAMS.get(str(name).strip(), str(name))
+    if not name: 
+        return "Bekliyor..."
+    name_str = str(name).strip()
+    # Eğer sözlükte varsa Türkçe karşılığını, yoksa orijinal ismi döndürür
+    return TR_TEAMS.get(name_str, name_str)
 
 def parse_tsi_time(utc_date_str):
     if not utc_date_str: return "--:--"
@@ -67,7 +83,7 @@ try:
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #ffffff; margin: 0; padding: 5px; color: #111111; -webkit-font-smoothing: antialiased; }
         html, body { overflow-x: hidden; }
-        ::-webkit-scrollbar { display: none; !important; }
+        ::-webkit-scrollbar { display: none !important; }
         
         .header-container { text-align: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; margin-bottom: 15px; }
         .header-container h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.5px; color: #0f172a; }
@@ -131,149 +147,4 @@ try:
         <button class="tab-btn" onclick="openTab('fixtures')">📅 Karşılaşmalar</button>
     </div>
 
-    <div id="groups" class="tab-content active">
-        <div class="groups-grid">
-"""
-
-    if standings:
-        for group in standings:
-            g_name = group.get("group", "Grup").replace("GROUP_", "Grup ")
-            html_content += f'<div class="group-card"><h2 class="group-title">{g_name}</h2>'
-            html_content += "<table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr>"
-            
-            for index, row in enumerate(group.get("table", [])):
-                team_obj = row.get("team") or {}
-                t_name = translate(team_obj.get("name"))
-                t_flag = team_obj.get("crest", "")
-                played = row.get("playedGames", 0)
-                points = row.get("points", 0)
-                gd = row.get("goalDifference", 0)
-                
-                row_style = ""
-                if played == 3:
-                    if index < 2: row_style = ' class="status-qualified"'
-                    elif index > 2: row_style = ' class="status-eliminated"'
-                
-                flag_html = f'<img src="{t_flag}" class="flag">' if t_flag else '<span class="tbd-icon">🏆</span>'
-                html_content += f"<tr{row_style}><td class='team-cell'>{flag_html}<span>{t_name}</span></td><td>{played}</td><td>{gd}</td><td>{points}</td></tr>"
-                
-            html_content += "</table></div>"
-    else:
-        html_content += "<p style='text-align:center;font-size:12px;color:#64748b;'>Puan durumu verisi yükleniyor...</p>"
-        
-    html_content += "</div></div>"
-
-    html_content += '<div id="bracket" class="tab-content"><div class="bracket-container">'
-    stages = {
-        "LAST_32": "Son 32 Turu", "LAST_16": "Son 16 Turu",
-        "QUARTER_FINALS": "Çeyrek Final", "SEMI_FINALS": "Yarı Final", "FINAL": "Final"
-    }
-    
-    has_bracket = False
-    if all_matches:
-        for stage_key, stage_title in stages.items():
-            stage_matches = [m for m in all_matches if m and m.get("stage") == stage_key]
-            if stage_matches:
-                has_bracket = True
-                html_content += f'<div class="section-divider">{stage_title}</div>'
-                for m in stage_matches:
-                    if not m: continue
-                    home_obj = m.get("homeTeam") or {}
-                    away_obj = m.get("awayTeam") or {}
-                    
-                    h_name = translate(home_obj.get("name")) if home_obj.get("name") else "Üst Tur Takımı"
-                    a_name = translate(away_obj.get("name")) if away_obj.get("name") else "Üst Tur Takımı"
-                    
-                    h_flag = home_obj.get("crest") if home_obj else ""
-                    a_flag = away_obj.get("crest") if away_obj else ""
-                    h_flag_html = f'<img src="{h_flag}" class="flag">' if h_flag else '<span class="tbd-icon">🏆</span>'
-                    a_flag_html = f'<img src="{a_flag}" class="flag">' if a_flag else '<span class="tbd-icon">🏆</span>'
-                    
-                    score_obj = m.get("score") or {}
-                    full_time = score_obj.get("fullTime") or {}
-                    h_score = full_time.get("home")
-                    a_score = full_time.get("away")
-                    winner = score_obj.get("winner")
-                    
-                    h_cls = 'class="winner"' if winner == "HOME_TEAM" else ('class="loser"' if winner == "AWAY_TEAM" else "")
-                    a_cls = 'class="winner"' if winner == "AWAY_TEAM" else ('class="loser"' if winner == "HOME_TEAM" else "")
-                    
-                    html_content += f"""
-                    <div class="match-card">
-                        <div class="m-teams">
-                            <div class="m-line {h_cls}">{h_flag_html}<span>{h_name}</span></div>
-                            <div class="m-line {a_cls}">{a_flag_html}<span>{a_name}</span></div>
-                        </div>
-                        <div class="m-scores">
-                            <div>{h_score if h_score is not None else "-"}</div>
-                            <div>{a_score if a_score is not None else "-"}</div>
-                        </div>
-                    </div>"""
-                    
-    if not has_bracket:
-        html_content += "<p style='text-align:center;font-size:12px;color:#64748b;'>Grup aşaması tamamlandıktan sonra turnuva ağacı aktif olacaktır.</p>"
-        
-    html_content += "</div></div>"
-
-    html_content += '<div id="fixtures" class="tab-content"><div class="matches-list">'
-    today_matches, other_matches = [], []
-    
-    if all_matches:
-        for m in all_matches:
-            if not m: continue
-            utc_date = m.get("utcDate") or ""
-            if utc_date[:10] == current_date_str: today_matches.append(m)
-            else: other_matches.append(m)
-            
-    if today_matches:
-        html_content += '<div class="section-divider">Bugünün Maçları</div>'
-        for m in today_matches:
-            h_obj = m.get("homeTeam") or {}
-            a_obj = m.get("awayTeam") or {}
-            h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
-            h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            
-            score_obj = m.get("score") or {}
-            full_time = score_obj.get("fullTime") or {}
-            h_score = full_time.get("home")
-            a_score = full_time.get("away")
-            
-            status = m.get("status")
-            badge = '<span class="status-badge badge-live">CANLI</span>' if status == "IN_PLAY" else ('<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>')
-                
-            html_content += f"""
-            <div class="match-card today">
-                <div class="m-teams">
-                    <div class="m-line">{h_flag_html}<span>{h_name}</span></div>
-                    <div class="m-line">{a_flag_html}<span>{a_name}</span></div>
-                </div>
-                <div class="m-scores">
-                    <div>{h_score if h_score is not None else "-"}</div>
-                    <div>{a_score if a_score is not None else "-"}</div>
-                </div>
-                <div class="m-info">{badge}</div>
-            </div>"""
-
-    if other_matches:
-        html_content += '<div class="section-divider">Karşılaşmalar</div>'
-        for m in other_matches[:45]:
-            h_obj = m.get("homeTeam") or {}
-            a_obj = m.get("awayTeam") or {}
-            h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
-            h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
-            
-            score_obj = m.get("score") or {}
-            full_time = score_obj.get("fullTime") or {}
-            h_score = full_time.get("home")
-            a_score = full_time.get("away")
-            
-            status = m.get("status")
-            badge = '<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>'
-                
-            html_content += f"""
-            <div class="match-card">
-                <div class="m-teams">
-                    <div class="m-line">{h_flag_html}<span>{h_name}</span></div>
-                    <div class="m-line">{a_flag_html}<span>{a_name}</span></div>
+    <div id="groups" class="tab-content active
