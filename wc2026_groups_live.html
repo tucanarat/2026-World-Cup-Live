@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 FIFA Dünya Kupası — Grup Aşaması</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #111; padding: 24px 16px; }
+  h1 { font-size: 22px; font-weight: 700; color: #0a2463; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 8px; }
+  .last-updated { font-size: 11px; color: #999; margin-bottom: 20px; }
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 16px; }
+  .group-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .group-title { background: #0a2463; color: #fff; padding: 9px 14px; font-size: 13px; font-weight: 700; letter-spacing: .4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th { padding: 6px 8px; color: #888; font-weight: 600; font-size: 11px; border-bottom: 1px solid #eee; text-align: center; background: #fafafa; }
+  thead th:first-child { text-align: left; width: 46%; }
+  tbody td { padding: 6px 8px; text-align: center; border-bottom: 1px solid #f0f0f0; color: #222; }
+  tbody td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.qualified { background: #edf7f1; }
+  tbody tr.eliminated td { opacity: .45; }
+  .pts { font-weight: 700; color: #0a2463; }
+  .team-cell { display: flex; align-items: center; gap: 7px; }
+  .flag-img { width: 22px; height: 15px; object-fit: cover; border-radius: 2px; flex-shrink: 0; border: 1px solid #ddd; }
+  .legend { display: flex; gap: 18px; margin-bottom: 14px; font-size: 12px; color: #555; align-items: center; flex-wrap: wrap; }
+  .l-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .l-green { background: #c8efd8; border: 1px solid #8acfaa; }
+  .l-fade { background: #e0e0e0; border: 1px solid #ccc; }
+  .footer { margin-top: 16px; font-size: 11px; color: #999; }
+  .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+  .error-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 16px; font-size: 13px; color: #856404; display: none; }
+  .api-setup { background: #e8f4fd; border: 1px solid #90caf9; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: #0d47a1; }
+  .api-setup strong { display: block; margin-bottom: 6px; font-size: 14px; }
+  .api-setup ol { padding-left: 18px; line-height: 2; }
+  .api-setup a { color: #1565c0; }
+  .api-key-input { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .api-key-input input { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid #90caf9; border-radius: 6px; font-size: 13px; }
+  .api-key-input button { padding: 7px 16px; background: #0a2463; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .api-key-input button:hover { background: #1565c0; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>2026 FIFA Dünya Kupası — Grup Aşaması</h1>
+<p class="subtitle">ABD / Kanada / Meksika &nbsp;·&nbsp; 11–27 Haziran 2026</p>
+<p class="last-updated" id="lastUpdated"></p>
+
+<!-- API Kurulum Kutusu - API key girilince kaybolur -->
+<div class="api-setup" id="setupBox">
+  <strong>⚙️ Otomatik güncelleme için ücretsiz API key gerekiyor</strong>
+  <ol>
+    <li><a href="https://www.football-data.org/client/register" target="_blank">football-data.org</a> adresine ücretsiz kayıt ol</li>
+    <li>E-postana gelen API key'i kopyala</li>
+    <li>Aşağıya yapıştır ve kaydet</li>
+  </ol>
+  <div class="api-key-input">
+    <input type="text" id="apiKeyInput" placeholder="API key'ini buraya yapıştır..." />
+    <button onclick="saveApiKey()">Kaydet ve Yükle</button>
+  </div>
+</div>
+
+<div class="error-box" id="errorBox"></div>
+
+<div class="legend">
+  <div style="display:flex;align-items:center;gap:6px"><div class="l-dot l-green"></div> Gruptan geçti / geçme ihtimali yüksek</div>
+  <div style="display:flex;align-items:center;gap:6px"><div class="l-dot l-fade"></div> Elendi</div>
+</div>
+
+<div id="groupsContainer">
+  <div class="loading">⏳ Veriler yükleniyor...</div>
+</div>
+
+<p class="footer" id="footerNote" style="display:none">O=Oyun &nbsp;·&nbsp; G=Galibiyet &nbsp;·&nbsp; B=Beraberlik &nbsp;·&nbsp; M=Mağlubiyet &nbsp;·&nbsp; AG=Attığı Gol &nbsp;·&nbsp; YG=Yediği Gol &nbsp;·&nbsp; AV=Averaj &nbsp;·&nbsp; P=Puan</p>
+
+<script>
+// ── Ülke kodu → flagcdn kodu eşleştirmesi ──────────────────────────────────
+const FLAG_MAP = {
+  'Mexico': 'mx', 'South Africa': 'za', 'Korea Republic': 'kr', 'Czechia': 'cz',
+  'Switzerland': 'ch', 'Canada': 'ca', 'Bosnia and Herzegovina': 'ba', 'Qatar': 'qa',
+  'Brazil': 'br', 'Morocco': 'ma', 'Scotland': 'gb-sct', 'Haiti': 'ht',
+  'USA': 'us', 'United States': 'us', 'Australia': 'au', 'Paraguay': 'py', 'Türkiye': 'tr', 'Turkey': 'tr',
+  'Germany': 'de', "Côte d'Ivoire": 'ci', 'Ivory Coast': 'ci', 'Ecuador': 'ec', 'Curaçao': 'cw',
+  'Netherlands': 'nl', 'Japan': 'jp', 'Sweden': 'se', 'Tunisia': 'tn',
+  'Belgium': 'be', 'Egypt': 'eg', 'Iran': 'ir', 'New Zealand': 'nz',
+  'Spain': 'es', 'Uruguay': 'uy', 'Cabo Verde': 'cv', 'Cape Verde': 'cv', 'Saudi Arabia': 'sa',
+  'France': 'fr', 'Senegal': 'sn', 'Norway': 'no', 'Iraq': 'iq',
+  'Argentina': 'ar', 'Austria': 'at', 'Algeria': 'dz', 'Jordan': 'jo',
+  'Colombia': 'co', 'Portugal': 'pt', 'DR Congo': 'cd', 'Congo DR': 'cd', 'Uzbekistan': 'uz',
+  'England': 'gb-eng', 'Ghana': 'gh', 'Croatia': 'hr', 'Panama': 'pa'
+};
+
+// Türkçe takım adları
+const NAME_TR = {
+  'Mexico': 'Meksika', 'South Africa': 'Güney Afrika', 'Korea Republic': 'Güney Kore', 'Czechia': 'Çekya',
+  'Switzerland': 'İsviçre', 'Canada': 'Kanada', 'Bosnia and Herzegovina': 'Bosna-Hersek', 'Qatar': 'Katar',
+  'Brazil': 'Brezilya', 'Morocco': 'Fas', 'Scotland': 'İskoçya', 'Haiti': 'Haiti',
+  'USA': 'ABD', 'United States': 'ABD', 'Australia': 'Avustralya', 'Paraguay': 'Paraguay',
+  'Türkiye': 'Türkiye', 'Turkey': 'Türkiye',
+  'Germany': 'Almanya', "Côte d'Ivoire": 'Fildişi Kıyısı', 'Ivory Coast': 'Fildişi Kıyısı',
+  'Ecuador': 'Ekvador', 'Curaçao': 'Curaçao',
+  'Netherlands': 'Hollanda', 'Japan': 'Japonya', 'Sweden': 'İsveç', 'Tunisia': 'Tunus',
+  'Belgium': 'Belçika', 'Egypt': 'Mısır', 'Iran': 'İran', 'New Zealand': 'Yeni Zelanda',
+  'Spain': 'İspanya', 'Uruguay': 'Uruguay', 'Cabo Verde': 'Kabo Verde', 'Cape Verde': 'Kabo Verde',
+  'Saudi Arabia': 'Suudi Arabistan',
+  'France': 'Fransa', 'Senegal': 'Senegal', 'Norway': 'Norveç', 'Iraq': 'Irak',
+  'Argentina': 'Arjantin', 'Austria': 'Avusturya', 'Algeria': 'Cezayir', 'Jordan': 'Ürdün',
+  'Colombia': 'Kolombiya', 'Portugal': 'Portekiz', 'DR Congo': 'Kongo DR', 'Congo DR': 'Kongo DR',
+  'Uzbekistan': 'Özbekistan',
+  'England': 'İngiltere', 'Ghana': 'Gana', 'Croatia': 'Hırvatistan', 'Panama': 'Panama'
+};
+
+const GROUP_LABELS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+
+// football-data.org 2026 Dünya Kupası kodu
+const COMPETITION_CODE = 'CWC'; // Güncellenecek - WC veya FIFA'nın belirlediği kod
+
+function getApiKey() {
+  return localStorage.getItem('fd_api_key') || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { alert('Lütfen API key girin.'); return; }
+  localStorage.setItem('fd_api_key', key);
+  document.getElementById('setupBox').classList.add('hide');
+  loadStandings(key);
+}
+
+function flagUrl(teamName) {
+  const code = FLAG_MAP[teamName] || 'un';
+  return `https://flagcdn.com/w40/${code}.png`;
+}
+
+function teamName(name) {
+  return NAME_TR[name] || name;
+}
+
+function getRowClass(position, played) {
+  if (played === 0) return '';
+  if (position <= 2) return 'qualified';
+  if (position === 4) return 'eliminated';
+  return '';
+}
+
+function renderGroups(standings) {
+  const container = document.getElementById('groupsContainer');
+  container.innerHTML = '<div class="groups-grid"></div>';
+  const grid = container.querySelector('.groups-grid');
+
+  standings.forEach((group, idx) => {
+    const label = GROUP_LABELS[idx] || (idx + 1);
+    const card = document.createElement('div');
+    card.className = 'group-card';
+
+    const maxPlayed = Math.max(...group.table.map(t => t.playedGames));
+
+    let rows = '';
+    group.table.forEach((entry, pos) => {
+      const name = entry.team.name;
+      const rc = getRowClass(pos + 1, maxPlayed);
+      const av = entry.goalDifference >= 0 ? '+' + entry.goalDifference : entry.goalDifference;
+      rows += `
+        <tr class="${rc}">
+          <td><div class="team-cell">
+            <img class="flag-img" src="${flagUrl(name)}" alt="${teamName(name)}"
+                 onerror="this.src='https://flagcdn.com/w40/un.png'">
+            <span>${teamName(name)}</span>
+          </div></td>
+          <td>${entry.playedGames}</td>
+          <td>${entry.won}</td>
+          <td>${entry.draw}</td>
+          <td>${entry.lost}</td>
+          <td>${entry.goalsFor}</td>
+          <td>${entry.goalsAgainst}</td>
+          <td>${av}</td>
+          <td class="pts">${entry.points}</td>
+        </tr>`;
+    });
+
+    card.innerHTML = `
+      <div class="group-title">Grup ${label}</div>
+      <table>
+        <thead><tr>
+          <th>Takım</th><th>O</th><th>G</th><th>B</th><th>M</th>
+          <th>AG</th><th>YG</th><th>AV</th><th>P</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('footerNote').style.display = 'block';
+  document.getElementById('lastUpdated').textContent =
+    'Son güncelleme: ' + new Date().toLocaleString('tr-TR');
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.style.display = 'block';
+  box.innerHTML = '⚠️ ' + msg;
+}
+
+async function loadStandings(apiKey) {
+  const container = document.getElementById('groupsContainer');
+  container.innerHTML = '<div class="loading">⏳ Veriler yükleniyor...</div>';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    // football-data.org v4 — 2026 FIFA World Cup competition ID: WC
+    const res = await fetch('https://api.football-data.org/v4/competitions/WC/standings', {
+      headers: { 'X-Auth-Token': apiKey }
+    });
+
+    if (res.status === 403) {
+      showError('API key hatalı veya yetkisiz. Lütfen doğru key\'i girin.');
+      document.getElementById('setupBox').classList.remove('hide');
+      container.innerHTML = '';
+      return;
+    }
+    if (res.status === 404) {
+      showError('2026 Dünya Kupası verileri henüz API\'de mevcut değil. Turnuva başladığında otomatik çalışacak.');
+      container.innerHTML = '';
+      return;
+    }
+    if (!res.ok) {
+      showError('API hatası: ' + res.status + ' ' + res.statusText);
+      container.innerHTML = '';
+      return;
+    }
+
+    const data = await res.json();
+
+    // standings dizisi grupları içeriyor
+    if (!data.standings || data.standings.length === 0) {
+      showError('Henüz grup verisi yok. Maçlar başladığında otomatik güncellenir.');
+      container.innerHTML = '';
+      return;
+    }
+
+    renderGroups(data.standings);
+
+  } catch (err) {
+    showError('Bağlantı hatası: ' + err.message);
+    container.innerHTML = '';
+  }
+}
+
+// ── Başlangıç ──────────────────────────────────────────────────────────────
+(function init() {
+  const key = getApiKey();
+  if (key) {
+    document.getElementById('setupBox').classList.add('hide');
+    loadStandings(key);
+    // Her 5 dakikada bir otomatik yenile
+    setInterval(() => loadStandings(key), 5 * 60 * 1000);
+  } else {
+    document.getElementById('groupsContainer').innerHTML = '';
+  }
+})();
+</script>
+
+</body>
+</html>
