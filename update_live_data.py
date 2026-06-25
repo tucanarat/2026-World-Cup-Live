@@ -2,9 +2,13 @@ import os
 import requests
 from datetime import datetime, timedelta
 
-API_KEY = os.getenv("FOOTBALL_DATA_API_KEY")
-if not API_KEY:
-    print("HATA: API Anahtarı bulunamadı!")
+# EĞER ÇEVRE DEĞİŞKENİ ÇALIŞMIYORSA, KENDİ API KEY'İNİ "BURAYA_YAZ" KISMINA EKLEYEBİLİRSİN
+API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "BURAYA_YAZ")
+
+if not API_KEY or API_KEY == "afb8a78ed067402d8b19d6d5b29518d5":
+    print("\n🛑 HATA: API Anahtarı eksik!")
+    print("Lütfen kodu (update_live_data.py) not defteri veya editör ile açıp 'BURAYA_YAZ' yazan yere gerçek API anahtarını yapıştırın.")
+    input("Kapatmak için Enter'a basın...")
     exit(1)
 
 standings_url = "https://api.football-data.org/v4/competitions/WC/standings"
@@ -53,22 +57,30 @@ def parse_tsi_time(utc_date_str):
         return "--:--"
 
 try:
+    print("\n⏳ API'den veriler çekiliyor (Bu işlem birkaç saniye sürebilir)...")
     standings = []
     try:
         r = requests.get(standings_url, headers=headers, timeout=15)
-        if r.status_code == 200: standings = r.json().get("standings", [])
+        if r.status_code == 200: 
+            standings = r.json().get("standings", [])
+        else:
+            print(f"⚠️ Uyarı: Puan durumu API hatası döndü. Kod: {r.status_code}")
     except Exception as e:
-        print(f"Puan durumu çekilemedi: {e}")
+        print(f"🛑 Puan durumu çekilirken bağlantı hatası: {e}")
 
     all_matches = []
     try:
         r = requests.get(matches_url, headers=headers, timeout=15)
-        if r.status_code == 200: all_matches = r.json().get("matches", [])
+        if r.status_code == 200: 
+            all_matches = r.json().get("matches", [])
+        else:
+            print(f"⚠️ Uyarı: Fikstür API hatası döndü. Kod: {r.status_code}")
     except Exception as e:
-        print(f"Maçlar çekilemedi: {e}")
+        print(f"🛑 Maçlar çekilirken bağlantı hatası: {e}")
 
     current_date_str = datetime.utcnow().strftime("%Y-%m-%d")
 
+    print("📄 HTML şablonu oluşturuluyor...")
     html_content = """<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -95,7 +107,6 @@ try:
         .group-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; }
         .group-title { font-size: 12px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; padding-bottom: 5px; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; }
         
-        /* Düzenlenmiş Tablo Hizalamaları */
         table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
         th, td { padding: 6px 3px; text-align: center; }
         th { color: #94a3b8; font-weight: 600; font-size: 10px; }
@@ -106,7 +117,6 @@ try:
         .flag { width: 16px; height: 11px; object-fit: cover; border-radius: 1px; border: 1px solid #e2e8f0; }
         .tbd-icon { font-size: 11px; color: #94a3b8; }
 
-        /* Gruptan Çıkmayı Garantileyenler İçin Vurgu */
         .status-qualified { background-color: #f0fdf4 !important; }
         .status-qualified td { color: #166534; font-weight: bold; }
         .status-eliminated { color: #cbd5e1 !important; opacity: 0.55; }
@@ -164,11 +174,10 @@ try:
                 points = row.get("points", 0)
                 gd = row.get("goalDifference", 0)
                 
-                # 6 puan ve üzeri gruptan çıkmayı garantiler
                 row_style = ""
                 if points >= 6:
                     row_style = ' class="status-qualified"'
-                elif played == 3 and index > 1: # Grup maçları bittiyse ve ilk 2'de değilse elenir
+                elif played == 3 and index > 1:
                     row_style = ' class="status-eliminated"'
                 
                 flag_html = f'<img src="{t_flag}" class="flag" onerror="this.style.display=\'none\'">' if t_flag else '<span class="tbd-icon">🏆</span>'
@@ -326,10 +335,26 @@ try:
 </html>
 """
 
-    with open("wc2026_groups_live.html", "w", encoding="utf-8") as f:
+    # GÜVENLİ DOSYA KAYDETME İŞLEMİ
+    current_dir = os.getcwd()
+    file_path = os.path.join(current_dir, "wc2026_groups_live.html")
+
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     
-    print("HTML dosyası (wc2026_groups_live.html) başarıyla oluşturuldu!")
+    # Ekrana Tarayıcı Linkini Yazdırma
+    print("\n✅ BAŞARILI: HTML dosyası oluşturuldu!")
+    
+    # Windows ve Mac/Linux yol farklarını çözüp tam link formatı oluşturuyoruz
+    browser_link = "file:///" + file_path.replace("\\", "/")
+    
+    print("--------------------------------------------------")
+    print("🌐 PUAN DURUMUNU GÖRMEK İÇİN AŞAĞIDAKİ LİNKİ KOPYALAYIP TARAYICINIZA YAPIŞTIRIN:\n")
+    print(f"👉  {browser_link}  👈")
+    print("--------------------------------------------------")
+
+    input("\nEkranı kapatmak için Enter'a basın...")
 
 except Exception as e:
-    print(f"Genel bir hata oluştu: {e}")
+    print(f"\n🛑 KRİTİK HATA: Kod çalışırken beklenmeyen bir hata ile karşılaştı:\nDetay: {e}")
+    input("\nEkranı kapatmak için Enter'a basın...")
