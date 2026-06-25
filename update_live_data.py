@@ -25,25 +25,23 @@ html = """<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dünya Kupası Puan Durumu</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 10px; background-color: #f8fafc; color: #334; }
-        .group { margin-bottom: 20px; background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h2 { color: #0f172a; font-size: 15px; margin: 0 0 10px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { font-size: 11px; color: #94a3b8; padding: 5px; }
-        td { padding: 8px 5px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        .team-cell { display: flex; align-items: center; gap: 8px; text-align: left; }
-        .flag { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        .group-card { background: white; margin-bottom: 20px; padding: 15px; border-radius: 10px; border-top: 5px solid #2ecc71; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-top: 0; font-size: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; padding: 10px; text-align: center; color: #7f8c8d; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        .team-info { display: flex; align-items: center; gap: 10px; justify-content: start; }
+        .flag { width: 30px; height: 20px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 2px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center; font-size: 20px;">Dünya Kupası 2026</h1>
+    <h1 style="text-align:center;">2026 Dünya Kupası Puan Durumu</h1>
 """
 
 for group in get_standings():
-    html += f'<div class="group"><h2>{group.get("group").replace("GROUP_", "Grup ")}</h2><table>'
+    html += f'<div class="group-card"><h2>{group.get("group").replace("GROUP_", "Grup ")}</h2><table>'
     html += '<tr><th style="text-align:left;">Takım</th><th>O</th><th>P</th></tr>'
     for row in group.get("table", []):
         team_obj = row.get("team", {})
@@ -51,18 +49,10 @@ for group in get_standings():
         flag = team_obj.get("crest", "")
         played = row.get("playedGames", 0)
         points = row.get("points", 0)
-        
-        html += f'''<tr>
-            <td class="team-cell">
-                <img src="{flag}" class="flag" onerror="this.style.display='none'">
-                {name}
-            </td>
-            <td>{played}</td>
-            <td style="font-weight:bold;">{points}</td>
-        </tr>'''
+        html += f'<tr><td class="team-info"><img src="{flag}" class="flag">{name}</td><td>{played}</td><td style="font-weight:bold;">{points}</td></tr>'
     html += '</table></div>'
 
 html += "</body></html>"
 
-with open("wc2026_groups_live.html", "w", encoding="utf-8") as f:
+with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
