@@ -116,53 +116,32 @@ if standings:
         
         table_rows = group.get("table", [])
         
-        # Grubun tüm puan verilerini güvenli bir listeye alalım
-        group_points = []
-        for r in table_rows:
-            p_val = r.get("points")
-            group_points.append(int(p_val) if p_val is not None else 0)
-        
         for index, row in enumerate(table_rows):
-            team_obj = row.get("team") or {}
-            t_name = translate(team_obj.get("name"))
-            t_flag = team_obj.get("crest", "")
-            
-            p_games = row.get("playedGames")
-            p_pts = row.get("points")
-            p_gd = row.get("goalDifference")
-            
-            played = int(p_games) if p_games is not None else 0
-            points = int(p_pts) if p_pts is not None else 0
-            gd = int(p_gd) if p_gd is not None else 0
-            
-            row_style = ""
-            
-            # Durum 1: Grup aşaması bu takım için bittiyse (3 Maç)
-            if played == 3:
-                if index < 2: 
-                    row_style = ' class="status-qualified"'
-                elif index == 3: 
-                    row_style = ' class="status-eliminated"'
-            
-            # Durum 2: Takım henüz 2 maç oynamış ama matematiksel olarak elenmişse
-            elif played == 2:
-                # Maksimum ulaşabileceği puan
-                max_possible = points + 3
-                # Grupta bu puandan kesinlikle daha yüksek puana sahip olan takım sayısı
-                higher_teams = sum(1 for p in group_points if p > max_possible)
+            try:
+                team_obj = row.get("team") or {}
+                t_name = translate(team_obj.get("name"))
+                t_flag = team_obj.get("crest", "")
                 
-                # Eğer 3 takım birden bu puanı geçmişse, takım hiçbir koşulda 4. sıradan kurtulamaz -> Elendi
-                if higher_teams >= 3:
-                    row_style = ' class="status-eliminated"'
-                # Özel İstisna: 0 puanlı sonuncu takımlar için diğer ikilinin 4+ puanı varsa (Örn: Türkiye'nin grubu)
-                elif points == 0 and len(group_points) == 4:
-                    # Gruptaki diğer takımların puan sıralamasına bakarak 3. olma ihtimalini tamamen yitirdiyse
-                    sorted_points = sorted(group_points, reverse=True)
-                    if sorted_points[2] >= 4:
+                played = int(row.get("playedGames") or 0)
+                points = int(row.get("points") or 0)
+                gd = int(row.get("goalDifference") or 0)
+                
+                row_style = ""
+                
+                # Sadece resmi olarak tüm grup maçları (3 maç) bittiyse renklendirme yapalım.
+                # API sıralamayı otomatik yaptığı için ilk 2 takım yeşil, sonuncu takım silikleşir.
+                if played == 3:
+                    if index < 2: 
+                        row_style = ' class="status-qualified"'
+                    elif index == 3: 
                         row_style = ' class="status-eliminated"'
-
-            flag_html = f'<img src="{t_flag}" class="flag">' if t_flag else '<span class="tbd-icon">🏆</span>'
-            html_content += f"<tr{row_style}><td class='team-cell'>{flag_html}<span>{t_name}</span></td><td>{played}</td><td>{gd}</td><td>{points}</td></tr>"
+                
+                flag_html = f'<img src="{t_flag}" class="flag">' if t_flag else '<span class="tbd-icon">🏆</span>'
+                html_content += f"<tr{row_style}><td class='team-cell'>{flag_html}<span>{t_name}</span></td><td>{played}</td><td>{gd}</td><td>{points}</td></tr>"
+            except Exception as e:
+                # Herhangi bir satırda veri tipi hatası alınırsa çökme, temiz satır bas
+                html_content += f"<tr><td class='team-cell'><span>Veri Hatası</span></td><td>0</td><td>0</td><td>0</td></tr>"
+                
         html_content += "</table></div>"
 else:
     html_content += "<p style='text-align:center;font-size:12px;color:#64748b;grid-column:1/-1;padding:20px;'>Puan durumu verisi yükleniyor...</p>"
@@ -192,4 +171,59 @@ if all_matches:
                 a_score = full_time.get("away")
                 winner = score_obj.get("winner")
                 h_cls = 'class="winner"' if winner == "HOME_TEAM" else ('class="loser"' if winner == "AWAY_TEAM" else "")
-                a_cls
+                a_cls = 'class="winner"' if winner == "AWAY_TEAM" else ('class="loser"' if winner == "HOME_TEAM" else "")
+                html_content += f'<div class="match-card"><div class="m-teams"><div class="m-line {h_cls}">{h_flag_html}<span>{h_name}</span></div><div class="m-line {a_cls}">{a_flag_html}<span>{a_name}</span></div></div><div class="m-scores"><div>{h_score if h_score is not None else "-"}</div><div>{a_score if a_score is not None else "-"}</div></div></div>'
+
+if not has_bracket:
+    html_content += "<p style='text-align:center;font-size:12px;color:#64748b;padding:20px;'>Grup aşaması tamamlandıktan sonra turnuva ağacı aktif olacaktır.</p>"
+
+html_content += '</div></div><div id="fixtures" class="tab-content"><div class="matches-list">'
+today_matches, other_matches = [], []
+
+if all_matches:
+    for m in all_matches:
+        if not m: continue
+        if (m.get("utcDate") or "")[:10] == current_date_str: today_matches.append(m)
+        else: other_matches.append(m)
+
+if today_matches:
+    html_content += '<div class="section-divider">Bugünün Maçları</div>'
+    for m in today_matches:
+        h_obj = m.get("homeTeam") or {}
+        a_obj = m.get("awayTeam") or {}
+        h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
+        h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
+        a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
+        full_time = (m.get("score") or {}).get("fullTime") or {}
+        h_score, a_score = full_time.get("home"), full_time.get("away")
+        status = m.get("status")
+        badge = '<span class="status-badge badge-live">CANLI</span>' if status == "IN_PLAY" else ('<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>')
+        html_content += f'<div class="match-card today"><div class="m-teams"><div class="m-line">{h_flag_html}<span>{h_name}</span></div><div class="m-line">{a_flag_html}<span>{a_name}</span></div></div><div class="m-scores"><div>{h_score if h_score is not None else "-"}</div><div>{a_score if a_score is not None else "-"}</div></div><div class="m-info">{badge}</div></div>'
+
+if other_matches:
+    html_content += '<div class="section-divider">Tüm Karşılaşmalar</div>'
+    for m in other_matches[:50]:
+        h_obj = m.get("homeTeam") or {}
+        a_obj = m.get("awayTeam") or {}
+        h_name, a_name = translate(h_obj.get("name")), translate(a_obj.get("name"))
+        h_flag_html = f'<img src="{h_obj.get("crest")}" class="flag">' if h_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
+        a_flag_html = f'<img src="{a_obj.get("crest")}" class="flag">' if a_obj.get("crest") else '<span class="tbd-icon">🏆</span>'
+        full_time = (m.get("score") or {}).get("fullTime") or {}
+        h_score, a_score = full_time.get("home"), full_time.get("away")
+        status = m.get("status")
+        badge = '<span class="status-badge badge-end">BİTTİ</span>' if status == "FINISHED" else f'<span class="status-badge badge-time">{parse_tsi_time(m.get("utcDate"))} TSİ</span>'
+        html_content += f'<div class="match-card"><div class="m-teams"><div class="m-line">{h_flag_html}<span>{h_name}</span></div><div class="m-line">{a_flag_html}<span>{a_name}</span></div></div><div class="m-scores"><div>{h_score if h_score is not None else "-"}</div><div>{a_score if a_score is not None else "-"}</div></div><div class="m-info">{badge}</div></div>'
+
+html_content += """</div></div>
+<script>
+    function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if(event && event.currentTarget) { event.currentTarget.classList.add('active'); }
+    }
+</script></body></html>"""
+
+with open("wc2026_groups_live.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+print("HTML dosyası başarıyla üretildi.")
