@@ -3,836 +3,849 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 FIFA Dünya Kupası</title>
+    <title>2026 Dünya Kupası Canlı Takip</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; margin: 0; padding: 10px; color: #1a1a1a; }
-        h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 25px; color: #111; letter-spacing: -0.5px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #ffffff; margin: 0; padding: 5px; color: #111111; -webkit-font-smoothing: antialiased; }
         
-        /* Minimalist Üst Sekmeler */
-        .tabs { display: flex; justify-content: center; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; gap: 5px; }
-        .tab-btn { background: none; border: none; color: #6b7280; padding: 12px 18px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: #111111; font-weight: 600; border-bottom: 2px solid #111111; }
+        /* Şık ve Kaydırma Çubuksuz Yapı */
+        html, body { overflow-x: hidden; }
+        ::-webkit-scrollbar { display: none; }
+        
+        /* Futbolu Yansıtan Minimal Başlık */
+        .header-container { text-align: center; padding: 15px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 15px; }
+        .header-container h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.5px; color: #0f172a; }
+        .header-container p { font-size: 11px; color: #10b981; font-weight: 600; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Futbol Temalı Minimal Sekmeler */
+        .tabs { display: flex; justify-content: center; margin-bottom: 20px; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 1px; }
+        .tab-btn { background: none; border: none; color: #64748b; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .tab-btn:hover { color: #0f172a; }
+        .tab-btn.active { color: #10b981; font-weight: 600; border-bottom: 2px solid #10b981; }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Puan Durumu Listesi */
-        .groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
-        .group-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; padding: 12px; }
-        .group-title { font-size: 14px; font-weight: 600; color: #111; margin: 0 0 10px 0; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px 6px; text-align: center; }
-        th { color: #9ca3af; font-weight: 500; font-size: 11px; text-transform: uppercase; }
-        td { border-bottom: 1px solid #f9fafb; }
+        /* Puan Durumu Grid */
+        .groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; padding: 5px; }
+        .group-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; transition: transform 0.15s; }
+        .group-card:hover { border-color: #cbd5e1; }
+        .group-title { font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        .team-cell { display: flex; align-items: center; gap: 8px; text-align: left; }
-        .flag { width: 18px; height: 12px; object-fit: cover; border-radius: 1px; border: 1px solid #efefef; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 6px 4px; text-align: center; }
+        th { color: #94a3b8; font-weight: 600; font-size: 10px; text-transform: uppercase; }
+        td { border-bottom: 1px solid #f8fafc; color: #334155; }
         
-        /* Minimal Durum Renkleri - İstekleriniz Doğrultusunda Sadece Silik Yapıldı */
-        .status-qualified { font-weight: 600; background-color: #f0fdf4; }
-        .status-eliminated { color: #d1d5db; opacity: 0.55; }
+        .team-cell { display: flex; align-items: center; gap: 8px; text-align: left; font-weight: 500; }
+        .flag { width: 16px; height: 11px; object-fit: cover; border-radius: 1px; border: 1px solid #e2e8f0; }
+        .tbd-icon { font-size: 12px; color: #94a3b8; }
 
-        /* Maç Kartları Tasarımları (Turnuva Ağacı & Karşılaşmalar) */
-        .matches-list, .bracket-container { display: flex; flex-direction: column; gap: 12px; max-width: 550px; margin: 0 auto; }
-        .match-section-title { font-size: 13px; font-weight: 600; color: #6b7280; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .match-card { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; }
-        .today-card { border: 1px solid #111111; background: #fafafa; }
-        .today-badge { background: #111; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-bottom: 4px; display: inline-block; }
+        /* Durum Renkleri (Sadece Silik Yazı) */
+        .status-qualified { font-weight: 600; color: #0f172a; background-color: #f0fdf4; }
+        .status-eliminated { color: #cbd5e1 !important; opacity: 0.6; }
+
+        /* Karşılaşma ve Ağaç Kartları Tasarımı */
+        .matches-list, .bracket-container { display: flex; flex-direction: column; gap: 8px; max-width: 500px; margin: 0 auto; padding: 5px; }
+        .section-divider { font-size: 11px; font-weight: 700; color: #64748b; margin: 15px 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        .section-divider::after { content: ''; flex: 1; height: 1px; background: #f1f5f9; }
         
-        .m-teams { display: flex; flex-direction: column; gap: 4px; }
-        .m-scores { display: flex; flex-direction: column; gap: 4px; font-weight: 600; text-align: right; }
-        .winner { font-weight: 600; color: #111; }
-        .loser { color: #d1d5db; opacity: 0.6; }
-        .tbd-text { color: #9ca3af; font-style: italic; font-size: 12px; }
+        .match-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; }
+        .match-card.today { border-color: #10b981; background: #f0fdf4; }
+        
+        .m-teams { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .m-line { display: flex; align-items: center; gap: 8px; }
+        .m-scores { display: flex; flex-direction: column; gap: 6px; font-weight: 700; text-align: right; width: 25px; color: #0f172a; }
+        
+        /* Maç Durum Bilgileri */
+        .m-info { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 10px; border-left: 1px solid #f1f5f9; margin-left: 10px; min-width: 60px; }
+        .status-badge { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; text-transform: uppercase; }
+        .badge-live { background: #ef4444; color: #ffffff; animation: pulse 1.5s infinite; }
+        .badge-time { background: #f1f5f9; color: #475569; }
+        .badge-end { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+        .winner { font-weight: 600; color: #0f172a; }
+        .loser { color: #cbd5e1; }
+        .tbd-text { color: #94a3b8; font-style: italic; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1>2026 FIFA Dünya Kupası</h1>
+    <div class="header-container">
+        <h1>2026 FIFA DÜNYA KUPASI</h1>
+        <p>Canlı Turnuva Merkezi</p>
+    </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="openTab('groups')">Puan Durumu</button>
-        <button class="tab-btn" onclick="openTab('bracket')">Turnuva Ağacı</button>
-        <button class="tab-btn" onclick="openTab('fixtures')">Karşılaşmalar</button>
+        <button class="tab-btn active" onclick="openTab('groups')">⚽ Puan Durumu</button>
+        <button class="tab-btn" onclick="openTab('bracket')">🌿 Turnuva Ağacı</button>
+        <button class="tab-btn" onclick="openTab('fixtures')">📅 Karşılaşmalar</button>
     </div>
 
     <div id="groups" class="tab-content active">
         <div class="groups-grid">
-<div class="group-card"><h2 class="group-title">Group A</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></td><td>3</td><td>6</td><td>9</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/9396.svg" class="flag"><span>South Africa</span></td><td>3</td><td>-1</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/772.png" class="flag"><span>Güney Kore</span></td><td>3</td><td>-1</td><td>3</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/798.svg" class="flag"><span>Çekya</span></td><td>3</td><td>-4</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group B</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/788.svg" class="flag"><span>İsviçre</span></td><td>3</td><td>4</td><td>7</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/canada.svg" class="flag"><span>Kanada</span></td><td>3</td><td>5</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/bosnia.svg" class="flag"><span>Bosna Hersek</span></td><td>3</td><td>-1</td><td>4</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/8030.svg" class="flag"><span>Katar</span></td><td>3</td><td>-8</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group C</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/764.svg" class="flag"><span>Brezilya</span></td><td>3</td><td>6</td><td>7</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/morocco.svg" class="flag"><span>Fas</span></td><td>3</td><td>3</td><td>7</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/814.svg" class="flag"><span>İskoçya</span></td><td>3</td><td>-3</td><td>3</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/haiti.svg" class="flag"><span>Haiti</span></td><td>3</td><td>-6</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group D</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/usa.svg" class="flag"><span>ABD</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/779.svg" class="flag"><span>Avustralya</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/761.svg" class="flag"><span>Paraguay</span></td><td>2</td><td>-2</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/803.svg" class="flag"><span>Türkiye</span></td><td>2</td><td>-3</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group E</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></td><td>2</td><td>7</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/787.svg" class="flag"><span>Ivory Coast</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/791.svg" class="flag"><span>Ekvador</span></td><td>2</td><td>-1</td><td>1</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/curacao.svg" class="flag"><span>Curaçao</span></td><td>2</td><td>-6</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group F</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8601.svg" class="flag"><span>Hollanda</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/766.svg" class="flag"><span>Japonya</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/792.svg" class="flag"><span>Sweden</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/tunisia.svg" class="flag"><span>Tunus</span></td><td>2</td><td>-8</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group G</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/825.svg" class="flag"><span>Egypt</span></td><td>2</td><td>2</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/iran.svg" class="flag"><span>İran</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/805.svg" class="flag"><span>Belçika</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/783.svg" class="flag"><span>New Zealand</span></td><td>2</td><td>-2</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group H</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/760.svg" class="flag"><span>İspanya</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/758.svg" class="flag"><span>Uruguay</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/cape_verde.svg" class="flag"><span>Cape Verde Islands</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/saudi_arabia.svg" class="flag"><span>Suudi Arabistan</span></td><td>2</td><td>-4</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group I</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/773.svg" class="flag"><span>Fransa</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/813.svg" class="flag"><span>Norway</span></td><td>2</td><td>4</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/senegal.svg" class="flag"><span>Senegal</span></td><td>2</td><td>-3</td><td>0</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/iraq.svg" class="flag"><span>Iraq</span></td><td>2</td><td>-6</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group J</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/762.png" class="flag"><span>Arjantin</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/816.svg" class="flag"><span>Austria</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/algeria.svg" class="flag"><span>Algeria</span></td><td>2</td><td>-2</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8049.png" class="flag"><span>Jordan</span></td><td>2</td><td>-3</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group K</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/818.svg" class="flag"><span>Colombia</span></td><td>2</td><td>3</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/765.svg" class="flag"><span>Portekiz</span></td><td>2</td><td>5</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/congo_dr.svg" class="flag"><span>Congo DR</span></td><td>2</td><td>-1</td><td>1</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8070.png" class="flag"><span>Uzbekistan</span></td><td>2</td><td>-7</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group L</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/770.svg" class="flag"><span>İngiltere</span></td><td>2</td><td>2</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/ghana.svg" class="flag"><span>Gana</span></td><td>2</td><td>1</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/799.svg" class="flag"><span>Hırvatistan</span></td><td>2</td><td>-1</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/panama.svg" class="flag"><span>Panama</span></td><td>2</td><td>-2</td><td>0</td></tr></table></div></div></div><div id="bracket" class="tab-content"><div class="bracket-container"><div class="match-section-title">Son 32 Turu</div>
+<div class="group-card"><h2 class="group-title">Group A</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></td><td>3</td><td>6</td><td>9</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/9396.svg" class="flag"><span>South Africa</span></td><td>3</td><td>-1</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/772.png" class="flag"><span>Güney Kore</span></td><td>3</td><td>-1</td><td>3</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/798.svg" class="flag"><span>Çekya</span></td><td>3</td><td>-4</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group B</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/788.svg" class="flag"><span>İsviçre</span></td><td>3</td><td>4</td><td>7</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/canada.svg" class="flag"><span>Kanada</span></td><td>3</td><td>5</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/bosnia.svg" class="flag"><span>Bosna Hersek</span></td><td>3</td><td>-1</td><td>4</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/8030.svg" class="flag"><span>Katar</span></td><td>3</td><td>-8</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group C</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/764.svg" class="flag"><span>Brezilya</span></td><td>3</td><td>6</td><td>7</td></tr><tr class="status-qualified"><td class='team-cell'><img src="https://crests.football-data.org/morocco.svg" class="flag"><span>Fas</span></td><td>3</td><td>3</td><td>7</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/814.svg" class="flag"><span>İskoçya</span></td><td>3</td><td>-3</td><td>3</td></tr><tr class="status-eliminated"><td class='team-cell'><img src="https://crests.football-data.org/haiti.svg" class="flag"><span>Haiti</span></td><td>3</td><td>-6</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group D</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/usa.svg" class="flag"><span>ABD</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/779.svg" class="flag"><span>Avustralya</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/761.svg" class="flag"><span>Paraguay</span></td><td>2</td><td>-2</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/803.svg" class="flag"><span>Türkiye</span></td><td>2</td><td>-3</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group E</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></td><td>2</td><td>7</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/787.svg" class="flag"><span>Ivory Coast</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/791.svg" class="flag"><span>Ekvador</span></td><td>2</td><td>-1</td><td>1</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/curacao.svg" class="flag"><span>Curaçao</span></td><td>2</td><td>-6</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group F</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8601.svg" class="flag"><span>Hollanda</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/766.svg" class="flag"><span>Japonya</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/792.svg" class="flag"><span>İsveç</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/tunisia.svg" class="flag"><span>Tunus</span></td><td>2</td><td>-8</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group G</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/825.svg" class="flag"><span>Mısır</span></td><td>2</td><td>2</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/iran.svg" class="flag"><span>İran</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/805.svg" class="flag"><span>Belçika</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/783.svg" class="flag"><span>New Zealand</span></td><td>2</td><td>-2</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group H</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/760.svg" class="flag"><span>İspanya</span></td><td>2</td><td>4</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/758.svg" class="flag"><span>Uruguay</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/cape_verde.svg" class="flag"><span>Cape Verde Islands</span></td><td>2</td><td>0</td><td>2</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/saudi_arabia.svg" class="flag"><span>Suudi Arabistan</span></td><td>2</td><td>-4</td><td>1</td></tr></table></div><div class="group-card"><h2 class="group-title">Group I</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/773.svg" class="flag"><span>Fransa</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/813.svg" class="flag"><span>Norveç</span></td><td>2</td><td>4</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/senegal.svg" class="flag"><span>Senegal</span></td><td>2</td><td>-3</td><td>0</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/iraq.svg" class="flag"><span>Iraq</span></td><td>2</td><td>-6</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group J</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/762.png" class="flag"><span>Arjantin</span></td><td>2</td><td>5</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/816.svg" class="flag"><span>Austria</span></td><td>2</td><td>0</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/algeria.svg" class="flag"><span>Cezayir</span></td><td>2</td><td>-2</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8049.png" class="flag"><span>Jordan</span></td><td>2</td><td>-3</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group K</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/818.svg" class="flag"><span>Kolombiya</span></td><td>2</td><td>3</td><td>6</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/765.svg" class="flag"><span>Portekiz</span></td><td>2</td><td>5</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/congo_dr.svg" class="flag"><span>Congo DR</span></td><td>2</td><td>-1</td><td>1</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/8070.png" class="flag"><span>Uzbekistan</span></td><td>2</td><td>-7</td><td>0</td></tr></table></div><div class="group-card"><h2 class="group-title">Group L</h2><table><tr><th style='text-align:left;'>Takım</th><th>O</th><th>AV</th><th>P</th></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/770.svg" class="flag"><span>İngiltere</span></td><td>2</td><td>2</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/ghana.svg" class="flag"><span>Gana</span></td><td>2</td><td>1</td><td>4</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/799.svg" class="flag"><span>Hırvatistan</span></td><td>2</td><td>-1</td><td>3</td></tr><tr><td class='team-cell'><img src="https://crests.football-data.org/panama.svg" class="flag"><span>Panama</span></td><td>2</td><td>-2</td><td>0</td></tr></table></div></div></div><div id="bracket" class="tab-content"><div class="bracket-container"><div class="section-divider">Son 32 Turu</div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >Almanya</div>
-                        <div >None</div>
+                        <div class="m-line "><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >Meksika</div>
-                        <div >None</div>
+                        <div class="m-line "><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >ABD</div>
-                        <div >None</div>
+                        <div class="m-line "><img src="https://crests.football-data.org/usa.svg" class="flag"><span>ABD</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >Arjantin</div>
-                        <div >None</div>
+                        <div class="m-line "><img src="https://crests.football-data.org/762.png" class="flag"><span>Arjantin</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
-                </div><div class="match-section-title">Son 16 Turu</div>
+                </div><div class="section-divider">Son 16 Turu</div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
-                </div><div class="match-section-title">Çeyrek Final</div>
+                </div><div class="section-divider">Çeyrek Final</div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
-                </div><div class="match-section-title">Yarı Final</div>
+                </div><div class="section-divider">Yarı Final</div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
                 </div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
-                </div><div class="match-section-title">Final</div>
+                </div><div class="section-divider">Final</div>
                 <div class="match-card">
                     <div class="m-teams">
-                        <div >None</div>
-                        <div >None</div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
+                        <div class="m-line "><span class="tbd-icon">🏆</span><span>Üst Tur Takımı</span></div>
                     </div>
                     <div class="m-scores">
-                        <div >-</div>
-                        <div >-</div>
+                        <div>-</div>
+                        <div>-</div>
                     </div>
-                </div></div></div><div id="fixtures" class="tab-content"><div class="matches-list"><div class="match-section-title">Bugünün Maçları</div>
-            <div class="match-card today-card">
+                </div></div></div><div id="fixtures" class="tab-content"><div class="matches-list"><div class="section-divider">Bugünün Maçları</div>
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>Çekya</div>
-                    <div>Meksika</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/798.svg" class="flag"><span>Çekya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>3</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
-            <div class="match-card today-card">
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>South Africa</div>
-                    <div>Güney Kore</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/9396.svg" class="flag"><span>South Africa</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/772.png" class="flag"><span>Güney Kore</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
-            <div class="match-card today-card">
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>Ekvador</div>
-                    <div>Almanya</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/791.svg" class="flag"><span>Ekvador</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>-</div>
                     <div>-</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-time">23:00 TSİ</span></div>
             </div>
-            <div class="match-card today-card">
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>Curaçao</div>
-                    <div>Ivory Coast</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/curacao.svg" class="flag"><span>Curaçao</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/787.svg" class="flag"><span>Ivory Coast</span></div>
                 </div>
                 <div class="m-scores">
                     <div>-</div>
                     <div>-</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-time">23:00 TSİ</span></div>
             </div>
-            <div class="match-card today-card">
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>Tunus</div>
-                    <div>Hollanda</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/tunisia.svg" class="flag"><span>Tunus</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8601.svg" class="flag"><span>Hollanda</span></div>
                 </div>
                 <div class="m-scores">
                     <div>-</div>
                     <div>-</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-time">02:00 TSİ</span></div>
             </div>
-            <div class="match-card today-card">
+            <div class="match-card today">
                 <div class="m-teams">
-                    <span class="today-badge">CANLI / BUGÜN</span>
-                    <div>Japonya</div>
-                    <div>Sweden</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/766.svg" class="flag"><span>Japonya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/792.svg" class="flag"><span>İsveç</span></div>
                 </div>
                 <div class="m-scores">
                     <div>-</div>
                     <div>-</div>
                 </div>
-            </div><div class="match-section-title">Tüm Karşılaşmalar</div>
+                <div class="m-info"><span class="status-badge badge-time">02:00 TSİ</span></div>
+            </div><div class="section-divider">Tüm Karşılaşmalar</div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Meksika</div>
-                    <div>South Africa</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/9396.svg" class="flag"><span>South Africa</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Güney Kore</div>
-                    <div>Çekya</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/772.png" class="flag"><span>Güney Kore</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/798.svg" class="flag"><span>Çekya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Kanada</div>
-                    <div>Bosna Hersek</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/canada.svg" class="flag"><span>Kanada</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/bosnia.svg" class="flag"><span>Bosna Hersek</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>ABD</div>
-                    <div>Paraguay</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/usa.svg" class="flag"><span>ABD</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/761.svg" class="flag"><span>Paraguay</span></div>
                 </div>
                 <div class="m-scores">
                     <div>4</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Katar</div>
-                    <div>İsviçre</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8030.svg" class="flag"><span>Katar</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/788.svg" class="flag"><span>İsviçre</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Brezilya</div>
-                    <div>Fas</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/764.svg" class="flag"><span>Brezilya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/morocco.svg" class="flag"><span>Fas</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Haiti</div>
-                    <div>İskoçya</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/haiti.svg" class="flag"><span>Haiti</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/814.svg" class="flag"><span>İskoçya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Avustralya</div>
-                    <div>Türkiye</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/779.svg" class="flag"><span>Avustralya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/803.svg" class="flag"><span>Türkiye</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Almanya</div>
-                    <div>Curaçao</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/curacao.svg" class="flag"><span>Curaçao</span></div>
                 </div>
                 <div class="m-scores">
                     <div>7</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Hollanda</div>
-                    <div>Japonya</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8601.svg" class="flag"><span>Hollanda</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/766.svg" class="flag"><span>Japonya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>2</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Ivory Coast</div>
-                    <div>Ekvador</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/787.svg" class="flag"><span>Ivory Coast</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/791.svg" class="flag"><span>Ekvador</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Sweden</div>
-                    <div>Tunus</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/792.svg" class="flag"><span>İsveç</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/tunisia.svg" class="flag"><span>Tunus</span></div>
                 </div>
                 <div class="m-scores">
                     <div>5</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>İspanya</div>
-                    <div>Cape Verde Islands</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/760.svg" class="flag"><span>İspanya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/cape_verde.svg" class="flag"><span>Cape Verde Islands</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Belçika</div>
-                    <div>Egypt</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/805.svg" class="flag"><span>Belçika</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/825.svg" class="flag"><span>Mısır</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Suudi Arabistan</div>
-                    <div>Uruguay</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/saudi_arabia.svg" class="flag"><span>Suudi Arabistan</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/758.svg" class="flag"><span>Uruguay</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>İran</div>
-                    <div>New Zealand</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/iran.svg" class="flag"><span>İran</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/783.svg" class="flag"><span>New Zealand</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>2</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Fransa</div>
-                    <div>Senegal</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/773.svg" class="flag"><span>Fransa</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/senegal.svg" class="flag"><span>Senegal</span></div>
                 </div>
                 <div class="m-scores">
                     <div>3</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Iraq</div>
-                    <div>Norway</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/iraq.svg" class="flag"><span>Iraq</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/813.svg" class="flag"><span>Norveç</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>4</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Arjantin</div>
-                    <div>Algeria</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/762.png" class="flag"><span>Arjantin</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/algeria.svg" class="flag"><span>Cezayir</span></div>
                 </div>
                 <div class="m-scores">
                     <div>3</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Austria</div>
-                    <div>Jordan</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/816.svg" class="flag"><span>Austria</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8049.png" class="flag"><span>Jordan</span></div>
                 </div>
                 <div class="m-scores">
                     <div>3</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Portekiz</div>
-                    <div>Congo DR</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/765.svg" class="flag"><span>Portekiz</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/congo_dr.svg" class="flag"><span>Congo DR</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>İngiltere</div>
-                    <div>Hırvatistan</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/770.svg" class="flag"><span>İngiltere</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/799.svg" class="flag"><span>Hırvatistan</span></div>
                 </div>
                 <div class="m-scores">
                     <div>4</div>
                     <div>2</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Gana</div>
-                    <div>Panama</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/ghana.svg" class="flag"><span>Gana</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/panama.svg" class="flag"><span>Panama</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Uzbekistan</div>
-                    <div>Colombia</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8070.png" class="flag"><span>Uzbekistan</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/818.svg" class="flag"><span>Kolombiya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>3</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Çekya</div>
-                    <div>South Africa</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/798.svg" class="flag"><span>Çekya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/9396.svg" class="flag"><span>South Africa</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>İsviçre</div>
-                    <div>Bosna Hersek</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/788.svg" class="flag"><span>İsviçre</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/bosnia.svg" class="flag"><span>Bosna Hersek</span></div>
                 </div>
                 <div class="m-scores">
                     <div>4</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Kanada</div>
-                    <div>Katar</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/canada.svg" class="flag"><span>Kanada</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8030.svg" class="flag"><span>Katar</span></div>
                 </div>
                 <div class="m-scores">
                     <div>6</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Meksika</div>
-                    <div>Güney Kore</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/769.svg" class="flag"><span>Meksika</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/772.png" class="flag"><span>Güney Kore</span></div>
                 </div>
                 <div class="m-scores">
                     <div>1</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>ABD</div>
-                    <div>Avustralya</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/usa.svg" class="flag"><span>ABD</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/779.svg" class="flag"><span>Avustralya</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>İskoçya</div>
-                    <div>Fas</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/814.svg" class="flag"><span>İskoçya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/morocco.svg" class="flag"><span>Fas</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Brezilya</div>
-                    <div>Haiti</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/764.svg" class="flag"><span>Brezilya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/haiti.svg" class="flag"><span>Haiti</span></div>
                 </div>
                 <div class="m-scores">
                     <div>3</div>
                     <div>0</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Türkiye</div>
-                    <div>Paraguay</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/803.svg" class="flag"><span>Türkiye</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/761.svg" class="flag"><span>Paraguay</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Hollanda</div>
-                    <div>Sweden</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/8601.svg" class="flag"><span>Hollanda</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/792.svg" class="flag"><span>İsveç</span></div>
                 </div>
                 <div class="m-scores">
                     <div>5</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Almanya</div>
-                    <div>Ivory Coast</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/759.svg" class="flag"><span>Almanya</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/787.svg" class="flag"><span>Ivory Coast</span></div>
                 </div>
                 <div class="m-scores">
                     <div>2</div>
                     <div>1</div>
                 </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
             <div class="match-card">
                 <div class="m-teams">
-                    <div>Ekvador</div>
-                    <div>Curaçao</div>
+                    <div class="m-line"><img src="https://crests.football-data.org/791.svg" class="flag"><span>Ekvador</span></div>
+                    <div class="m-line"><img src="https://crests.football-data.org/curacao.svg" class="flag"><span>Curaçao</span></div>
                 </div>
                 <div class="m-scores">
                     <div>0</div>
                     <div>0</div>
                 </div>
-            </div>
-            <div class="match-card">
-                <div class="m-teams">
-                    <div>Tunus</div>
-                    <div>Japonya</div>
-                </div>
-                <div class="m-scores">
-                    <div>0</div>
-                    <div>4</div>
-                </div>
-            </div>
-            <div class="match-card">
-                <div class="m-teams">
-                    <div>İspanya</div>
-                    <div>Suudi Arabistan</div>
-                </div>
-                <div class="m-scores">
-                    <div>4</div>
-                    <div>0</div>
-                </div>
-            </div>
-            <div class="match-card">
-                <div class="m-teams">
-                    <div>Belçika</div>
-                    <div>İran</div>
-                </div>
-                <div class="m-scores">
-                    <div>0</div>
-                    <div>0</div>
-                </div>
-            </div>
-            <div class="match-card">
-                <div class="m-teams">
-                    <div>Uruguay</div>
-                    <div>Cape Verde Islands</div>
-                </div>
-                <div class="m-scores">
-                    <div>2</div>
-                    <div>2</div>
-                </div>
-            </div>
-            <div class="match-card">
-                <div class="m-teams">
-                    <div>New Zealand</div>
-                    <div>Egypt</div>
-                </div>
-                <div class="m-scores">
-                    <div>1</div>
-                    <div>3</div>
-                </div>
+                <div class="m-info"><span class="status-badge badge-end">BİTTİ</span></div>
             </div>
     </div></div>
     <script>
