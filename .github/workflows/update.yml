@@ -1,0 +1,35 @@
+name: Puan Durumu Güncelleyici
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Depoyu bilgisayara çek
+      uses: actions/checkout@v3
+
+    - name: Python Kurulumu
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Gerekli kütüphaneleri yükle
+      run: |
+        pip install requests
+
+    - name: Güncelleme betiğini çalıştır
+      env:
+        FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+      run: python update_live_data.py
+
+    - name: Değişiklikleri kaydet ve GitHub'a yükle
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add wc2026_groups_live.html
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Canlı veriler güncellendi" && git push)
